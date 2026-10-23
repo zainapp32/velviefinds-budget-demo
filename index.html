@@ -246,7 +246,7 @@ function snapshot(){undoStack.push(JSON.stringify(S));if(undoStack.length>20)und
 function undoLast(){const p=undoStack.pop();if(!p){toast("Nothing to undo.");return}S=JSON.parse(p);save();render();toast("Undone.")}
 function acctBalance(aid,clearedOnly){const a=S.accounts.find(x=>x.id===aid);let bal=a?a.opening:0;S.txns.filter(t=>t.accountId===aid&&(!clearedOnly||t.status==="cleared")).forEach(t=>{bal+= t.type==="income"?t.amount: t.type==="expense"?-t.amount:0});S.bills.filter(b=>b.accountId===aid&&b.paid).forEach(b=>{if(!S.txns.some(t=>t.billId===b.id))bal-=b.amount});return bal}
 function totalCash(){return S.accounts.filter(a=>a.spending).reduce((s,a)=>s+acctBalance(a.id),0)}
-function nextPayday(){const fut=S.incomes.map(i=>i.nextDate).filter(d=>d&&d>=todayISO()).sort();return fut.length?fut[0]:null}
+function nextPayday(){const t=todayISO();const fut=S.incomes.filter(i=>i.status!=="received").map(i=>i.nextDate).filter(d=>d&&d>=t).sort();return fut.length?fut[0]:null}
 function horizonDate(){return nextPayday()||addDays(todayISO(),30)}
 function nextOccurrence(bill,from){const occ=billOccurrencesFrom(bill,from,1);return occ.length?occ[0]:bill.dueDate}
 function safeToSpend(){const horizon=horizonDate();const cash=totalCash();let billsDue=0;S.bills.filter(b=>!b.paid).forEach(b=>{const nd=nextOccurrence(b,todayISO());if(nd<=horizon)billsDue+=b.amount});const debtDue=S.debts.reduce((s,d)=>{const due=addDays(todayISO(),d.dueDay?Math.max(0,d.dueDay-new Date().getDate()):30);return s+(d.minPayment||0)},0);const envUnspent=S.envelopes.filter(e=>!e.archived).reduce((s,e)=>s+Math.max(0,e.allocated-envSpent(e.id)),0);const buffer=S.settings.buffer||0;const sts=cash-billsDue-debtDue-envUnspent-buffer;let projIncome=0;S.incomes.filter(i=>i.status==="expected"&&i.nextDate>todayISO()&&i.nextDate<=horizon).forEach(i=>projIncome+=i.amount);const projected=sts+projIncome;return{cash,billsDue,debtDue,envUnspent,buffer,sts,projected,horizon,shortfall:sts<0}}
@@ -295,7 +295,7 @@ return `<div class="card hide-focus" style="margin-top:14px"><h3 style="margin-t
 <div><div class="muted small">💸 YOU SPENT</div><div class="mm-num">${money(spent)}</div><span class="small muted">Money out this month</span></div>
 <div><div class="muted small">🟢 LEFT TO SPEND</div><div class="mm-num">${money(Math.max(0,left))}</div><span class="small muted">${left<0?money(0)+" left — you spent "+money(-left)+" more than came in this month":"Money in, minus money out"}</span></div>
 </div>
-${moneyIn>0?`<div class="progress" style="margin-top:12px"><i style="width:${Math.min(100,pctIn)}%;background:var(--accent)"></i></div><p class="small muted" style="margin:6px 0 0">You spent ${pctIn}% of the money that came in.</p>`:`<p class="small muted" style="margin:10px 0 0">No money in written down this month yet — add your pay and this card fills in.</p>`}
+${moneyIn>0?`<div class="progress" style="margin-top:12px"><i style="width:${Math.min(100,pctIn)}%;background:var(--accent)"></i></div><p class="small muted" style="margin:6px 0 0">You spent ${pctIn}% of the money that came in.</p>`:`<p class="small muted" style="margin:10px 0 0">No money received yet this month. This card counts money after it reaches you — when your pay arrives, tap “I got this money” on the Income page and it will show here.</p>`}
 <hr style="border-color:var(--line);margin:16px 0">
 ${chartHtml}
 ${segHtml}
