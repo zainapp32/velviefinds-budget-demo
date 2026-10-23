@@ -1,6 +1,6 @@
-# CalmNest Budget — Free Demo
+# Velvie Finds Budget — Free Demo
 
-A limited **free demo** of the CalmNest Budget ADHD-friendly budget planner app.
+A limited **free demo** of the Velvie Finds Budget ADHD-friendly budget planner app.
 
 **Try it:** open the demo (GitHub Pages link for this repo) and explore — Safe-to-Spend,
 paycheck budgeting, bill tracker, budgets, savings goals, debt payoff, envelopes, calendar and themes.
